@@ -22,4 +22,4 @@ graphs but sometimes results in two islands.
 A lesser diversion is the hallway construction where I admit I got lazy.  My only defense is it looks like a more
 "Dwarven" dungeon to my eye, so I kept it.
 
-I hope this provides someone some amusement, I enjoyed writting it. 
+I hope this provides someone some amusement, I enjoyed writing it. 
