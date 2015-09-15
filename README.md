@@ -6,7 +6,7 @@ I wrote this after reading an article on ["Procedural Dungeon Generation Algorit
 To be honest, I'm a sucker for graph paper dungeons and the word 'algorithm' so it was impossible for me
 to avoid implementing the dungeon generator described in the article.
 
-This code is very dependent on the excellent [pygame](pygame.org) framework.
+This code is very dependent on the excellent [pygame](http://pygame.org) framework.
 
 The Generate module will put up a window and draw each phase of the algorithm as described in the
 article with it's animated gifs.  The StateMachine module was something I reused from my pacman implementation
