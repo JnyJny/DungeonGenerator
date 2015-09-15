@@ -5,8 +5,9 @@ import random
 import pygame
 import pygame.color
 
+## http://gamasutra.com/blogs/AAdonaac/20150903/252889/Procedural_Dungeon_Generation_Algorithm.php
 
-
+## utility functions
 
 def roundm(n,m):
     rnd = lambda x: math.floor((x+m-1)/m)*m
@@ -23,20 +24,18 @@ def slope(p0,p1):
     return m
 
 def collide_rooms(left,right):
-    
+    '''
+    Collide rooms, allow them to share edges
+    '''
     if left == right:           # ignore self collisions
         return False
     
-    left_shrunk = left.rect.inflate(-2,-2)
-    right_shrunk = right.rect.inflate(-2,-2)
-
-#    left_shrunk.center = left.rect.center
-#    right_shrunk.center = right.rect.center
-    
-    return right_shrunk.colliderect(left_shrunk)
+    return right.rect.inflate(-2,-2).colliderect(left.rect.inflate(-2,-2))
 
 def collide_and_scatter_rooms(left,right):
-    
+    '''
+    If the rooms collide, apply a velocity to one of them.
+    '''
     if collide_rooms(left,right):
         right.repulse(left)
         return True
@@ -44,35 +43,51 @@ def collide_and_scatter_rooms(left,right):
     return False
 
 def gridToScreen(count,spacing):
+    '''
+    Convert grid coordinates (counts) to screen coordinates
+    '''
     return ((spacing+1)*count)+1
 
 def screenToGrid(coord,spacing):
+    '''
+    Convert screen coordinates to grid coordinates
+    '''
     return roundm(coord/(spacing+1),spacing)
 
 def collide_with_voids(left,right):
+    '''
+    '''
     return right.isVoid and collide_rooms(left,right)
 
 def snap_rect_to_grid(rect,gridSpacing):
+    '''
+    '''
     grid = gridSpacing+1
     rect.x = roundm(rect.x,grid)
     rect.y = roundm(rect.y,grid)
     rect.w = roundm(rect.w,grid)
     rect.h = roundm(rect.h,grid)
 
+## classes
+    
 class Room(pygame.sprite.Sprite):
     _id = 0
     @classmethod
     def fromRect(cls,rect,gridSpacing):
+        '''
+        Create a new room using rect for it's bounds.
+        '''
         r = Room(gridSpacing=gridSpacing)
         r.rect = rect
         return r
 
     @classmethod
     def nextID(cls):
+        '''
+        Return the next unique room identifer. 
+        '''
         i = cls._id
         cls._id += 1
-
-
 
     def __init__(self,x=0,y=0,width=1,height=1,gridSpacing=1):
         '''
@@ -148,18 +163,14 @@ class Room(pygame.sprite.Sprite):
         w = max(self.rect.x,other.rect.x) - x
         h = max(self.rect.y,other.rect.y) - y
         return pygame.rect.Rect(x,y,w,h)
-
     
     def distance_to(self,other):
         return self.vector.distance_to(other.vector)
 
-    def containsX(self,x,smidge=3):
-        return (self.rect.topleft[0] <= x) and (self.rect.topright[0] >= x)
-    
-    def containsY(self,y,smidge=3):
-        return (self.rect.topleft[1] <= y) and (self.rect.bottomleft[1] >= y)
-
     def snapToGrid(self,grid=None):
+        '''
+        Aligns the room to the specified grid.
+        '''
         if grid is None:
             grid = self.gridSpacing+1
         self.rect.x = roundm(self.rect.x,grid)
@@ -211,7 +222,9 @@ class Room(pygame.sprite.Sprite):
         self.velocity.y += dy + random.randint(-10,10) * random.randint(-1,1)
 
     def render(self,fgcolor=None,bgcolor=None,width=1):
-
+        '''
+        Draw the room with the specified colors and line width.
+        '''
         if fgcolor is None:
             fgcolor = self.fgcolor
             
@@ -232,17 +245,23 @@ class Room(pygame.sprite.Sprite):
         pygame.draw.rect(self.image,fgcolor,grid,width)
 
 
+        
 class Dungeon(pygame.sprite.RenderUpdates):
+    # room types
     VOIDS = 0
     HALLS = 5
     MAIN_ROOMS=10
+    
+    # default room colors by type
     COLORS = { VOIDS:     ((127,127,127),(0,0,0)), # fg,bg
                HALLS:     ((255,255,255),(0,0,255)),
                MAIN_ROOMS:((255,255,255),(255,0,0))}
 
     @classmethod
     def generate(cls,width,height,maxRoomDimension=10,gridSpacing=8,seedRooms=150):
-
+        '''
+        Creates a new dungeon.
+        '''
         dungeon = cls(width,height,
                       maxRoomDimension,
                       maxRoomDimension,
@@ -319,6 +338,10 @@ class Dungeon(pygame.sprite.RenderUpdates):
         return self.rooms.get_sprites_from_layer(self.VOIDS)
 
     def setRoomType(self,room,layer,render=True):
+        '''
+        Convenience function for moving sprites between layers.
+        Assumes room is already a member of self.rooms and not checked.
+        '''
         self.rooms.change_layer(room,layer)
         room.layer = layer
         if render:
@@ -332,7 +355,10 @@ class Dungeon(pygame.sprite.RenderUpdates):
             room.rect.y += dy
 
     def addRandomRoom(self,radius=None):
-
+        '''
+        Creates a new random room in a circle defined by radius whose origin
+        is the center of the dungeon.
+        '''
         if radius is None:
             radius = self.radius
         
@@ -350,7 +376,12 @@ class Dungeon(pygame.sprite.RenderUpdates):
         self.rooms.add(Room(x,y,w,h,self.gridSpacing),layer=self.VOIDS)
 
     def pickMainRooms(self,pickRatio):
-
+        '''
+        Determines the average width and height of all the rooms in the dungeon.
+        Typically called before inFillWithVoids to avoid skewing the results with
+        a ton of 1x1 rooms.  Rooms who are some pickRatio bigger than average are
+        picked to be "Main" rooms.  Function returns a list of rooms picked.
+        '''
         rooms = self.rooms.sprites()
         nrooms = len(rooms)
 
@@ -366,11 +397,21 @@ class Dungeon(pygame.sprite.RenderUpdates):
         return self.mainRooms
 
     def findMainRoomNeighbors(self,maxEdges=2):
+        '''
+        Tries to connect rooms by picking their maxEdges nearest neighbors.
+        Most of the time this results in a connected graph, but sometimes it
+        doesn't.  A full Delaunay triangulation would result in a fully connected
+        graph. 
+        '''
         rooms = self.mainRooms
         for room in rooms:
             room.pickClosestNeighbors(rooms,maxEdges)
     
     def connectHallsToRooms(self,hallwidth=3):
+        '''
+        Once main rooms have found their neighbors, we can turn surrounding void
+        rooms into hallways with width "hallwidth".
+        '''
 
         w =  gridToScreen(hallwidth,self.gridSpacing)
         
@@ -397,9 +438,12 @@ class Dungeon(pygame.sprite.RenderUpdates):
                     self.setRoomType(v,Dungeon.HALLS)
                     v.render()
 
-
     def inFillWithVoids(self,width=1,height=1,bounds=None):
-
+        '''
+        Fills the bounds rectangle with unit rooms and then collides those
+        rooms with main rooms and other voids.  The unit rooms that collide
+        are removed and the non-colliders are added to the dungeon.
+        '''
         if bounds is None:
             bounds = self.bound
 
@@ -417,11 +461,18 @@ class Dungeon(pygame.sprite.RenderUpdates):
         self.rooms.add(voids,layer=Dungeon.VOIDS)
 
     def stopRooms(self):
+        '''
+        Zeros the velocity of all rooms in the dungeon.
+        '''
         for room in self.rooms.sprites():
             room.velocity *= 0
             room.snapToGrid()        
 
     def spreadOutRooms(self,time=0,surface=None):
+        '''
+        Collides rooms with a 'collide and scatter' function that will cause
+        rooms to seperate from one another. 
+        '''
 
         done = False
         rooms = self.rooms.sprites()
@@ -448,9 +499,13 @@ class Dungeon(pygame.sprite.RenderUpdates):
             
 
     def update(self,time):
+        '''
+        '''
         self.rooms.update(time)
         
     def draw(self,surface,drawBounds=True):
+        '''
+        '''
     
         surface.fill(self.bgcolor)
 
@@ -461,7 +516,6 @@ class Dungeon(pygame.sprite.RenderUpdates):
                 pygame.draw.rect(surface,(0,128,0,0.1),self.bound.inflate(2,2),1)
             except:
                 pass
-
 
         return rects
 
