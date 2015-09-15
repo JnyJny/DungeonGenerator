@@ -2,6 +2,10 @@
 __pycache__/
 *.py[cod]
 
+# Emacs save turds
+*~
+
+
 # C extensions
 *.so
 
