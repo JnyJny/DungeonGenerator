@@ -16,7 +16,7 @@ to help keep everything from happening at once. Dungeon is the interesting part,
 manages Room objects. 
 
 The biggest diversion between the article and my implementation is my failure to implement a Delauny triangulation
-to build a garunteed connected graph.  My graph uses a closest neighbor function that mostly generates connected
+to build a guarunteed connected graph.  My graph uses a closest neighbor function that mostly generates connected
 graphs but sometimes results in two islands.
 
 A lesser diversion is the hallway construction where I admit I got lazy.  My only defense is it looks like a more
