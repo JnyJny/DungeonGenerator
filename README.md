@@ -1,7 +1,7 @@
 # DungeonGenerator
 Procedural Dungeon Generation with Python and Pygame
 
-I wrote this after reading an article on Gamasutra.com entitled ["Procedural Dungeon Generation Algorithm"](http://gamasutra.com/blogs/AAdonaac/20150903/252889/Procedural_Dungeon_Generation_Algorithm.php).
+I wrote this after reading an article on ["Procedural Dungeon Generation Algorithm"](http://gamasutra.com/blogs/AAdonaac/20150903/252889/Procedural_Dungeon_Generation_Algorithm.php).
 
 To be honest, I'm a sucker for graph paper dungeons and the word 'algorithm' so it was impossible for me
 to avoid implementing the dungeon generator described in the article.
