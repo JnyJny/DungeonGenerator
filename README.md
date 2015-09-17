@@ -11,7 +11,7 @@ to avoid implementing the dungeon generator described in the article.
 This code is very dependent on the excellent [pygame](http://pygame.org) framework.
 
 The Generate module will put up a window and draw each phase of the algorithm as described in the
-article with it's animated gifs.  The StateMachine module was something I reused from my pacman implementation
+article with it's animated gifs.  The StateMachine module was something I reused from my [pacman](https://github.com/JnyJny/pacman) implementation
 to help keep everything from happening at once. Dungeon is the interesting part, describing a Dungeon class that
 manages Room objects. 
 
